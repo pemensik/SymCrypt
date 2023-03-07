@@ -1,3 +1,5 @@
+%bcond_without check
+
 Summary:        Cryptographic library 
 Name:           SymCrypt
 License:        MIT and BSD-2-Clause-Views
@@ -39,25 +41,26 @@ Windows library
 %prep
 %autosetup -p1 -n %{name}-%{version}
 %build
-mkdir bin
-cd bin
-cmake .. \
+%cmake \
        -DSYMCRYPT_USE_ASM=OFF \
-       -DCMAKE_BUILD_TYPE=Debug \
        -DSYMCRYPT_FIPS_BUILD=OFF
-make
+
+%cmake_build
 
 %install
 mkdir -p %{buildroot}%{_libdir}/pkgconfig
 mkdir -p %{buildroot}%{_includedir}
 
-install -m 755 bin/module/generic/libsymcrypt.so* %{buildroot}%{_libdir}
-install -m 644 bin/inc/*.h %{buildroot}%{_includedir}
-install -m 644 bin/symcrypt.pc %{buildroot}%{_libdir}/pkgconfig/
+%cmake_install
+
+install -m 755 %{__cmake_builddir}/module/generic/libsymcrypt.so* %{buildroot}%{_libdir}
+install -m 644 -p %{__cmake_builddir}/inc/*.h %{buildroot}%{_includedir}
+install -m 644 -p %{__cmake_builddir}/symcrypt.pc %{buildroot}%{_libdir}/pkgconfig/
 
 %check
-./bin/exe/symcryptunittest
-
+%if %{with check}
+	%{__cmake_builddir}/exe/symcryptunittest
+%endif
 
 %files
 %license LICENSE
