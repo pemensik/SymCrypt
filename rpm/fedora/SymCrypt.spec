@@ -5,7 +5,7 @@ Name:           SymCrypt
 License:        MIT and BSD-2-Clause-Views
 
 Version:        103.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 
 URL:            https://github.com/microsoft/SymCrypt
 Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
@@ -33,6 +33,7 @@ currently used by Windows.
 %package devel
 Summary: Development headers for SymCrypt
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: pkgconf-pkg-config
 
 %description devel
 Development headers for the core cryptographic
@@ -43,18 +44,22 @@ Windows library
 %build
 %cmake \
        -DSYMCRYPT_USE_ASM=OFF \
-       -DSYMCRYPT_FIPS_BUILD=OFF
+       -DSYMCRYPT_FIPS_BUILD=OFF \
+       -DCMAKE_INSTALL_LIBDIR="$(basename -- %{_libdir})" \
+       -DCMAKE_INSTALL_INCLUDEDIR="$(basename -- %{_includedir})/SymCrypt"
+
 
 %cmake_build
 
 %install
 mkdir -p %{buildroot}%{_libdir}/pkgconfig
-mkdir -p %{buildroot}%{_includedir}
+mkdir -p %{buildroot}%{_includedir}/SymCrypt
 
 %cmake_install
 
 install -m 755 %{__cmake_builddir}/module/generic/libsymcrypt.so* %{buildroot}%{_libdir}
-install -m 644 -p %{__cmake_builddir}/inc/*.h %{buildroot}%{_includedir}
+install -m 644 -p inc/*.h inc/*.inc %{buildroot}%{_includedir}/SymCrypt
+install -m 644 -p %{__cmake_builddir}/inc/*.h %{buildroot}%{_includedir}/SymCrypt
 install -m 644 -p %{__cmake_builddir}/symcrypt.pc %{buildroot}%{_libdir}/pkgconfig/
 
 %check
@@ -71,9 +76,12 @@ install -m 644 -p %{__cmake_builddir}/symcrypt.pc %{buildroot}%{_libdir}/pkgconf
 
 %files devel
 %{_libdir}/libsymcrypt.so
-%{_includedir}/*.h
+%{_includedir}/SymCrypt/
 %{_libdir}/pkgconfig/symcrypt.pc
 
 %changelog
+* Wed Mar 08 2023 Petr Menšík <pemensik@redhat.com> - 103.1.0-2
+- Fix devel subpackage to provide all headers
+
 * Sat Jan 21 2023 Benson Muite <benson_muite@emailplus.org> - 103.1.0-1
 - Initial packaging
