@@ -41,6 +41,12 @@ Windows library
 
 %prep
 %autosetup -p1 -n %{name}-%{version}
+
+%if 0%{?rhel} && 0%{?rhel} < 9
+    # Compiler on RHEL8 is not able to compile unit test, make just the library
+    sed -e 's,add_subdirectory(unittest),# &,' -i CMakeLists.txt
+%endif
+
 %build
 %cmake \
        -DSYMCRYPT_USE_ASM=OFF \
@@ -59,11 +65,14 @@ mkdir -p %{buildroot}%{_includedir}/SymCrypt
 
 install -m 755 %{__cmake_builddir}/module/generic/libsymcrypt.so* %{buildroot}%{_libdir}
 install -m 644 -p inc/*.h inc/*.inc %{buildroot}%{_includedir}/SymCrypt
-install -m 644 -p %{__cmake_builddir}/inc/*.h %{buildroot}%{_includedir}/SymCrypt
 install -m 644 -p %{__cmake_builddir}/symcrypt.pc %{buildroot}%{_libdir}/pkgconfig/
 
+%if (0%{?fedora} || 0%{?rhel} >= 9)
+    install -m 644 -p %{__cmake_builddir}/inc/*.h %{buildroot}%{_includedir}/SymCrypt
+%endif
+
 %check
-%if %{with check}
+%if %{with check} && (0%{?fedora} || 0%{?rhel} >= 9)
 	%{__cmake_builddir}/exe/symcryptunittest
 %endif
 
